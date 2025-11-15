@@ -1,0 +1,47 @@
+pipeline {
+    agent any
+ 
+    environment {
+        GIT_CREDENTIALS = 'token' // Jenkins Git credentials ID
+        REPO_URL = 'https://github.com/Suhasreddy257/xrdashboard.git'
+        DEPLOY_PATH = 'D:\\buildforpipeline'
+        NODE_PATH = 'C:\\Program Files\\nodejs'  // Node.js install path
+    }
+ 
+    stages {
+        stage('Checkout & Build') {
+            steps {
+                withEnv(["PATH=${NODE_PATH};${env.PATH}"]) {
+                    // Checkout the correct branch
+                    git branch: 'main', credentialsId: "${GIT_CREDENTIALS}", url: "${REPO_URL}"
+ 
+                    // Verify Node and npm
+                    bat 'node -v'
+                    bat 'npm -v'
+ 
+                    // Install dependencies & build
+                    bat 'npm install'
+                    bat 'npm run build'
+                }
+            }
+        }
+ 
+        stage('Deploy') {
+            steps {
+                withEnv(["PATH=${NODE_PATH};${env.PATH}"]) {
+                    // Copy build to IIS folder
+                    bat "xcopy /E /Y dist ${DEPLOY_PATH}"
+                }
+            }
+        }
+    }
+ 
+    post {
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed!'
+        }
+    }
+}
