@@ -3,8 +3,8 @@ pipeline {
  
     environment {
         GIT_CREDENTIALS = 'github-pat' // Jenkins Git credentials ID
-        REPO_URL = 'https://github.com/Dona-rpnc/dashboard-frontend.git'
-        DEPLOY_PATH = 'C:\\inetpub\\wwwroot\\dona'
+        REPO_URL = 'https://github.com/Suhasreddy257/xrdashboard.git'
+        DEPLOY_PATH = 'D:\buildforpipeline'
         NODE_PATH = 'C:\\Program Files\\nodejs'  // Node.js install path
     }
  
