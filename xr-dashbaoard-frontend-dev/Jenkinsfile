@@ -1,47 +1,68 @@
 pipeline {
-    agent any
- 
-    environment {
-        GIT_CREDENTIALS = 'token' // Jenkins Git credentials ID
-        REPO_URL = 'https://github.com/Suhasreddy257/xrdashboard.git'
-        DEPLOY_PATH = 'D:\\buildforpipeline'
-        NODE_PATH = 'C:\\Program Files\\nodejs'  // Node.js install path
+  agent any
+
+  environment {
+    GIT_CREDENTIALS = 'token'
+    REPO_URL = 'https://github.com/Suhasreddy257/xrdashboard.git'
+    DEPLOY_PATH = 'D:\\buildforpipeline'
+    NODE_PATH = 'C:\\Program Files\\nodejs'
+  }
+
+  stages {
+    stage('Checkout') {
+      steps {
+        // checkout with credentials
+        git branch: 'main', credentialsId: "${GIT_CREDENTIALS}", url: "${REPO_URL}"
+      }
     }
- 
-    stages {
-        stage('Checkout & Build') {
-            steps {
-                withEnv(["PATH=${NODE_PATH};${env.PATH}"]) {
-                    // Checkout the correct branch
-                    git branch: 'main', credentialsId: "${GIT_CREDENTIALS}", url: "${REPO_URL}"
- 
-                    // Verify Node and npm
-                    bat 'node -v'
-                    bat 'npm -v'
- 
-                    // Install dependencies & build
-                    bat 'npm install'
-                    bat 'npm run build'
-                }
-            }
-        }
- 
-        stage('Deploy') {
-            steps {
-                withEnv(["PATH=${NODE_PATH};${env.PATH}"]) {
-                    // Copy build to IIS folder
-                    bat "xcopy /E /Y dist ${DEPLOY_PATH}"
-                }
-            }
-        }
+
+    stage('Debug workspace') {
+      steps {
+        bat 'echo workspace=%WORKSPACE%'
+        bat 'echo listing top-level:'
+        bat 'dir /b'
+        // search for package.json in workspace recursively
+        bat 'echo Searching for package.json...'
+        bat 'for /f "delims=" %%i in (\'dir /b /s package.json 2^>nul\') do @echo found: %%i || echo none'
+      }
     }
- 
-    post {
-        success {
-            echo 'Pipeline completed successfully!'
+
+    stage('Install & Build') {
+      steps {
+        withEnv(["PATH=${NODE_PATH};${env.PATH}"]) {
+          // find the folder containing package.json and run npm there
+          bat '''
+            @echo Finding package.json path...
+            for /f "delims=" %%F in ('dir /b /s package.json 2^>nul') do set "PKG=%%~dpF"
+            if "%PKG%"=="" (
+              echo ERROR: package.json not found in workspace && exit /b 1
+            )
+            echo package.json found in: %PKG%
+            cd /d "%PKG%"
+            echo running node & npm versions:
+            node -v
+            npm -v
+            echo installing...
+            npm install
+            echo building...
+            npm run build
+          '''
         }
-        failure {
-            echo 'Pipeline failed!'
-        }
+      }
     }
+
+    stage('Deploy') {
+      steps {
+        withEnv(["PATH=${NODE_PATH};${env.PATH}"]) {
+          // copy dist to deploy path — ensure dist path matches where build outputs it
+          bat 'if exist dist (xcopy /E /Y dist "\\\\?\\%DEPLOY_PATH%") else (echo dist not found && exit /b 1)'
+        }
+      }
+    }
+  }
+
+  post {
+    success { echo 'Pipeline completed successfully!' }
+    failure { echo 'Pipeline failed!' }
+  }
 }
