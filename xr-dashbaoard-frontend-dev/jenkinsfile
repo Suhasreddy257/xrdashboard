@@ -1,10 +1,10 @@
 pipeline {
-    agent { label 'local-agent' }
+    agent any
  
     environment {
         GIT_CREDENTIALS = 'token' // Jenkins Git credentials ID
         REPO_URL = 'https://github.com/Suhasreddy257/xrdashboard.git'
-        DEPLOY_PATH = 'D:\buildforpipeline'
+        DEPLOY_PATH = 'D:\\buildforpipeline'
         NODE_PATH = 'C:\\Program Files\\nodejs'  // Node.js install path
     }
  
@@ -44,3 +44,4 @@ pipeline {
             echo 'Pipeline failed!'
         }
     }
+}
