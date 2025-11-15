@@ -1,8 +1,8 @@
 pipeline {
-    agent { label 'windows-agent' }
+    agent { label 'local-agent' }
  
     environment {
-        GIT_CREDENTIALS = 'github-pat' // Jenkins Git credentials ID
+        GIT_CREDENTIALS = 'token' // Jenkins Git credentials ID
         REPO_URL = 'https://github.com/Suhasreddy257/xrdashboard.git'
         DEPLOY_PATH = 'D:\buildforpipeline'
         NODE_PATH = 'C:\\Program Files\\nodejs'  // Node.js install path
